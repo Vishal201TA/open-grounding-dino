@@ -36,9 +36,31 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
     _cnt = 0
 
+    prompt_templates = {
+        "Fall-Detected": "a person falling on the ground",
+        "Gloves": "a person wearing safety gloves",
+        "NO-Gloves": "a person without gloves",
+        "Goggles": "a person wearing safety goggles",
+        "NO-Goggles": "a person without safety goggles",
+        "Hardhat": "a worker wearing a hardhat",
+        "NO-Hardhat": "a worker without a hardhat",
+        "Mask": "a person wearing a mask",
+        "NO-Mask": "a person without a mask",
+        "Safety Vest": "a worker wearing a safety vest",
+        "NO-Safety Vest": "a worker without a safety vest",
+        "Person": "a person standing or walking",
+        "Safety Cone": "a safety cone placed on the ground",
+        "Ladder": "a person near or climbing a ladder",
+    }
+
+
     for samples, targets in metric_logger.log_every(data_loader, print_freq, header, logger=logger):
         samples = samples.to(device)
-        captions = [str(cap) for t in targets for cap in (t["caption"] if isinstance(t["caption"], list) else [t["caption"]])]
+        # captions = [str(cap) for t in targets for cap in (t["caption"] if isinstance(t["caption"], list) else [t["caption"]])]
+        captions = [
+            prompt_templates.get(cap, f"a photo of {cap}") 
+            for cap in captions
+        ]
         cap_list = [t.get("cap_list", []) for t in targets]
         if _cnt < 2:
             print("DEBUG Captions:", captions[:10])
