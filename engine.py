@@ -36,23 +36,39 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
     _cnt = 0
 
+    # prompt_templates = {
+    #     "Gloves": "a person wearing safety gloves",
+    #     "NO-Gloves": "a person without gloves",
+    #     "Mask": "a person wearing a mask",
+    #     "NO-Mask": "a person without a mask",
+    #     "Hardhat": "a worker wearing a hardhat",
+    #     "Safety Vest": "a worker wearing a safety vest",
+    #     "Fall-Detected": "a person falling on the ground",
+    #     "Goggles": "a person wearing goggles",
+    #     "NO-Goggles": "a person without goggles",
+    #     "NO-Hardhat": "a worker without a hardhat",
+    #     "NO-Safety Vest": "a worker without a safety vest",
+    #     "Person": "a person",
+    #     "Safety Cone": "a safety cone",
+    #     "Ladder": "a ladder"
+    # }
+
     prompt_templates = {
         "Gloves": "a person wearing safety gloves",
-        "NO-Gloves": "a person without gloves",
+        "NO-Gloves": "a person with no-gloves",
         "Mask": "a person wearing a mask",
-        "NO-Mask": "a person without a mask",
+        "NO-Mask": "a person with no-mask",
         "Hardhat": "a worker wearing a hardhat",
+        "NO-Hardhat": "a worker with  no-hardhat",
         "Safety Vest": "a worker wearing a safety vest",
-        "Fall-Detected": "a person falling on the ground",
+        "NO-Safety Vest": "a worker with  no-safety vest",
+        "Fall-Detected": "a person fall-detected",
         "Goggles": "a person wearing goggles",
-        "NO-Goggles": "a person without goggles",
-        "NO-Hardhat": "a worker without a hardhat",
-        "NO-Safety Vest": "a worker without a safety vest",
+        "NO-Goggles": "a person with no-goggles",
         "Person": "a person",
         "Safety Cone": "a safety cone",
         "Ladder": "a ladder"
     }
-
 
     for samples, targets in metric_logger.log_every(data_loader, print_freq, header, logger=logger):
         samples = samples.to(device)
@@ -131,14 +147,6 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         # amp backward function
         if args.amp:
             optimizer.zero_grad()
-            print("\n=== Optimizer param groups ===")
-            for i, group in enumerate(optimizer.param_groups):
-                print(f"Group {i}:")
-                print("  lr:", group["lr"], type(group["lr"]))
-                print("  weight_decay:", group["weight_decay"], type(group["weight_decay"]))
-                print("  num params:", len(group["params"]))
-
-
             scaler.scale(losses).backward()
             if max_norm > 0:
                 scaler.unscale_(optimizer)
