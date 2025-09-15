@@ -151,7 +151,11 @@ class Transformer(nn.Module):
         if not isinstance(num_patterns, int):
             Warning("num_patterns should be int but {}".format(type(num_patterns)))
             self.num_patterns = 0
-
+        if self.num_patterns > 0:
+            self.patterns = nn.Embedding(self.num_patterns, d_model)
+            nn.init.normal_(self.patterns.weight, std=0.02)
+        else:
+            self.patterns = None
         if num_feature_levels > 1:
             if self.num_encoder_layers > 0:
                 self.level_embed = nn.Parameter(torch.Tensor(num_feature_levels, d_model))
