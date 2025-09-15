@@ -92,9 +92,11 @@ class HungarianMatcher(nn.Module):
 
         print("DEBUG label_map size AFTER:", label_map.size())
 
-        # Now safe to index
-        new_label_map = label_map[tgt_ids]
+        # Make sure tgt_ids is on the same device
+        tgt_ids = tgt_ids.to(label_map.device)
 
+        # Safe indexing
+        new_label_map = label_map[tgt_ids]
 
         neg_cost_class = (1 - alpha) * (out_prob ** gamma) * (-(1 - out_prob + 1e-8).log())
         pos_cost_class = alpha * ((1 - out_prob) ** gamma) * (-(out_prob + 1e-8).log())
