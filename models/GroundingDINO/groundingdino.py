@@ -532,7 +532,7 @@ class SetCriterion(nn.Module):
              return_indices: used for vis. if True, the layer0-5 indices will be returned as well.
         """
         device=next(iter(outputs.values())).device
-        one_hot = torch.zeros(outputs['pred_logits'].size(),dtype=torch.int64) # torch.Size([bs, 900, 256])
+        one_hot = torch.zeros(outputs['pred_logits'].size(),dtype=torch.int64,device=device) # torch.Size([bs, 900, 256])
         token = outputs['token'] 
         
         label_map_list = []
@@ -562,8 +562,8 @@ class SetCriterion(nn.Module):
         for i in range(len(indices)):
             print(f"DEBUG tgt_ids[{i}] = {tgt_ids[i].tolist()}, label_map_list size = {label_map_list[i].size(0)}")
 
-            tgt_ids[i]=tgt_ids[i][indices[i][1]]
-            one_hot[i,indices[i][0]] = label_map_list[i][tgt_ids[i]].to(torch.long)
+            tgt_ids[i]=tgt_ids[i][indices[i][1]].to(device)
+            one_hot[i,indices[i][0].to(device)] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
 
 
         outputs['one_hot'] = one_hot
@@ -598,8 +598,8 @@ class SetCriterion(nn.Module):
                 one_hot_aux = torch.zeros(outputs['pred_logits'].size(),dtype=torch.int64,device=device)
                 tgt_ids = [v["labels"].to(device) for v in targets]
                 for i in range(len(indices)):
-                    tgt_ids[i]=tgt_ids[i][indices[i][1]]
-                    one_hot_aux[i,indices[i][0]] = label_map_list[i][tgt_ids[i]].to(torch.long)
+                    tgt_ids[i]=tgt_ids[i][indices[i][1]].to(device)
+                    one_hot_aux[i,indices[i][0].to(device)] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
                 aux_outputs['one_hot'] = one_hot_aux
                 aux_outputs['text_mask'] = outputs['text_mask']
                 if return_indices:
@@ -622,10 +622,10 @@ class SetCriterion(nn.Module):
                 inds = self.matcher(interm_output_single, [targets[j]], label_map_list[j])
                 indices.extend(inds)
             one_hot_aux = torch.zeros(outputs['pred_logits'].size(),dtype=torch.int64,device=device)
-            tgt_ids = [v["labels"].cpu() for v in targets]
+            tgt_ids = [v["labels"].to(device) for v in targets]
             for i in range(len(indices)):
-                tgt_ids[i]=tgt_ids[i][indices[i][1]]
-                one_hot_aux[i,indices[i][0]] = label_map_list[i][tgt_ids[i]].to(torch.long)
+                tgt_ids[i]=tgt_ids[i][indices[i][1]].to(device)
+                one_hot_aux[i,indices[i][0].to(device)] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
             interm_outputs['one_hot'] = one_hot_aux
             interm_outputs['text_mask'] = outputs['text_mask']
             if return_indices:
