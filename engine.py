@@ -61,17 +61,28 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         #     for cap in captions
         # ]
         # captions = [cap for cap in captions if cap and cap.strip()]
+        # captions = []
+        # for t in targets:
+        #     cap = t.get("caption")
+        #     if isinstance(cap, list):
+        #         cap = cap[0]  # take the first if multiple
+        #     if cap in prompt_templates:
+        #         captions.append(prompt_templates[cap])
+        #     elif cap is not None and str(cap).strip() != "":
+        #         captions.append(f"a photo of {cap}")
+        #     else:
+        #         captions.append("person")  # safe fallback
+
         captions = []
         for t in targets:
             cap = t.get("caption")
             if isinstance(cap, list):
-                cap = cap[0]  # take the first if multiple
-            if cap in prompt_templates:
-                captions.append(prompt_templates[cap])
-            elif cap is not None and str(cap).strip() != "":
-                captions.append(f"a photo of {cap}")
-            else:
-                captions.append("person")  # safe fallback
+                cap = ", ".join([prompt_templates.get(c, c) for c in cap if c])  # combine multiple labels
+            cap = prompt_templates.get(cap, f"a photo of {cap}") if cap else "safety helmet, person, goggles, safety vest, safety pants ,gloves"
+            if not cap.strip():
+                cap = "safety helmet, person, goggles, safety vest, safety pants ,gloves"  # fallback if empty string
+            captions.append(cap)
+
 
         # Confirm batch size matches captions
         batch_size = samples.tensors.shape[0]
@@ -85,6 +96,10 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         if _cnt < 2:
             print("DEBUG Captions:", captions[:10])
             print("Batch size:", samples.tensors.shape[0], "Captions size:", len(captions))
+            for i, cap in enumerate(captions):
+                if not cap.strip():
+                    print(f"Empty caption at index {i}")
+
 
 
         targets = [{k: v.to(device) for k, v in t.items() if torch.is_tensor(v)} for t in targets]
