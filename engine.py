@@ -125,6 +125,9 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             print(loss_dict_reduced)
             sys.exit(1)
 
+        print("LR type:", type(args.lr), "value:", args.lr)
+        print("WD type:", type(args.weight_decay), "value:", args.weight_decay)
+
         # amp backward function
         if args.amp:
             optimizer.zero_grad()
