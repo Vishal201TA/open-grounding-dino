@@ -63,15 +63,38 @@ class HungarianMatcher(nn.Module):
                 len(index_i) = len(index_j) = min(num_queries, num_target_boxes)
         """
 
+        # bs, num_queries = outputs["pred_logits"].shape[:2]
+
+        # # We flatten to compute the cost matrices in a batch
+        # out_prob = outputs["pred_logits"].flatten(0, 1).sigmoid()  # [batch_size * num_queries, num_classes]
+        # out_bbox = outputs["pred_boxes"].flatten(0, 1)  # [batch_size * num_queries, 4]
+
+        # # Also concat the target labels and boxes
+        # tgt_ids = torch.cat([v["labels"] for v in targets])
+        # tgt_bbox = torch.cat([v["boxes"] for v in targets])
+
         bs, num_queries = outputs["pred_logits"].shape[:2]
 
-        # We flatten to compute the cost matrices in a batch
-        out_prob = outputs["pred_logits"].flatten(0, 1).sigmoid()  # [batch_size * num_queries, num_classes]
-        out_bbox = outputs["pred_boxes"].flatten(0, 1)  # [batch_size * num_queries, 4]
+        # Flatten predictions
+        out_prob = outputs["pred_logits"].flatten(0, 1).sigmoid()
+        out_bbox = outputs["pred_boxes"].flatten(0, 1)
 
-        # Also concat the target labels and boxes
-        tgt_ids = torch.cat([v["labels"] for v in targets])
-        tgt_bbox = torch.cat([v["boxes"] for v in targets])
+        # Concatenate target labels and boxes
+        tgt_ids_list = [v["labels"] for v in targets]
+        tgt_bbox_list = [v["boxes"] for v in targets]
+
+        # Check for empty targets
+        if all(len(t) == 0 for t in tgt_ids_list):
+            # All targets are empty, return empty indices
+            return [(torch.tensor([], dtype=torch.int64), torch.tensor([], dtype=torch.int64)) for _ in targets]
+
+        # Safe cat
+        if len(tgt_ids_list) > 0:
+            tgt_ids = torch.cat([t for t in tgt_ids_list if len(t) > 0])
+            tgt_bbox = torch.cat([b for b in tgt_bbox_list if len(b) > 0])
+        else:
+            tgt_ids = torch.tensor([], dtype=torch.int64, device=outputs["pred_logits"].device)
+            tgt_bbox = torch.tensor([], dtype=torch.float32, device=outputs["pred_logits"].device)
 
         # Compute the classification cost.
         alpha = self.focal_alpha
