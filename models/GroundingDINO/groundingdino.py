@@ -854,19 +854,20 @@ def build_groundingdino(args):
 #         positive_map[j,beg_pos: end_pos + 1].fill_(1)
 #     return positive_map 
 
-
 def create_positive_map(tokenized, tokens_positive, cat_list, caption):
     """construct a map such that positive_map[i,j] = True iff box i is associated to token j"""
     positive_map = torch.zeros((len(tokens_positive), 256), dtype=torch.float)
 
-    for j, label in enumerate(tokens_positive):
-        category = cat_list[label]
+    caption_lower = caption.lower()
 
-        # 1. Find category in caption
-        start_ind = caption.find(category)
+    for j, label in enumerate(tokens_positive):
+        category = cat_list[label].lower()   # force lowercase
+
+        # 1. Find category in caption (case-insensitive)
+        start_ind = caption_lower.find(category)
         if start_ind == -1:
-            print(f"[WARNING] Category '{category}' not found in caption: '{caption}'")
-            continue  # skip if not found
+            print(f"[WARNING] Category '{cat_list[label]}' not found in caption: '{caption}'")
+            continue
 
         end_ind = start_ind + len(category) - 1
 
@@ -874,7 +875,7 @@ def create_positive_map(tokenized, tokens_positive, cat_list, caption):
         beg_pos = tokenized.char_to_token(start_ind)
         end_pos = tokenized.char_to_token(end_ind)
 
-        # 3. Fallbacks for tokenizer failures
+        # 3. Handle tokenizer failures
         if end_pos is None:
             for shift in [1, 2, -1, -2]:
                 try:
@@ -884,16 +885,15 @@ def create_positive_map(tokenized, tokens_positive, cat_list, caption):
                 except:
                     pass
 
-        # 4. Final safety checks
         if beg_pos is None or end_pos is None:
-            print(f"[WARNING] Could not map '{category}' in caption: '{caption}'")
+            print(f"[WARNING] Could not map '{cat_list[label]}' in caption: '{caption}'")
             continue
         if beg_pos < 0 or end_pos < 0:
             continue
         if beg_pos > end_pos:
             continue
 
-        # 5. Fill positive map
+        # 4. Fill positive map
         positive_map[j, beg_pos:end_pos + 1].fill_(1)
 
     return positive_map
