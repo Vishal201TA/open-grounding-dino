@@ -63,17 +63,21 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         # captions = [cap for cap in captions if cap and cap.strip()]
         captions = []
         for t in targets:
-            t_caps = t.get("caption", [])
-            if not isinstance(t_caps, list):
-                t_caps = [t_caps]
+            cap = t.get("caption")
+            if isinstance(cap, list):
+                cap = cap[0]  # take the first if multiple
+            if cap in prompt_templates:
+                captions.append(prompt_templates[cap])
+            elif cap is not None and str(cap).strip() != "":
+                captions.append(f"a photo of {cap}")
+            else:
+                captions.append("person")  # safe fallback
 
-            for cap in t_caps:
-                if cap in prompt_templates:
-                    captions.append(prompt_templates[cap])
-                elif cap is not None and str(cap).strip() != "":
-                    captions.append(f"a photo of {cap}")
-                else:
-                    captions.append("person")
+        # Confirm batch size matches captions
+        batch_size = samples.tensors.shape[0]
+        if len(captions) != batch_size:
+            # Repeat or truncate to match
+            captions = captions[:batch_size]
 
         if not captions:
             captions = ["safety helmet, person, goggles, safety vest, safety pants ,gloves"]
