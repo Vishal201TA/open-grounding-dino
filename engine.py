@@ -131,6 +131,14 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         # amp backward function
         if args.amp:
             optimizer.zero_grad()
+            for i, group in enumerate(optimizer.param_groups):
+                print(f"Group {i} LR={group['lr']} WD={group['weight_decay']}")
+                for p in group['params']:
+                    if not torch.is_tensor(p):
+                        print("⚠️ Non-tensor param:", type(p))
+                    else:
+                        print("Param shape:", p.shape, "device:", p.device, "dtype:", p.dtype)
+
             scaler.scale(losses).backward()
             if max_norm > 0:
                 scaler.unscale_(optimizer)
