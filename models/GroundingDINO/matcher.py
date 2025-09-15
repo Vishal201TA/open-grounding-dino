@@ -80,8 +80,8 @@ class HungarianMatcher(nn.Module):
 
         # new_label_map=label_map[tgt_ids.cpu()]
 
-        print("DEBUG tgt_ids:", tgt_ids.cpu().tolist())
-        print("DEBUG label_map size BEFORE:", label_map.size())
+        # print("DEBUG tgt_ids:", tgt_ids.cpu().tolist())
+        # print("DEBUG label_map size BEFORE:", label_map.size())
 
         # Ensure label_map is large enough
         max_label_id = tgt_ids.max().item()
@@ -90,7 +90,7 @@ class HungarianMatcher(nn.Module):
             pad = torch.zeros((pad_size, label_map.size(1)), device=label_map.device)
             label_map = torch.cat([label_map, pad], dim=0)
 
-        print("DEBUG label_map size AFTER:", label_map.size())
+        # print("DEBUG label_map size AFTER:", label_map.size())
 
         # Make sure tgt_ids is on the same device
         tgt_ids = tgt_ids.to(label_map.device)
