@@ -167,8 +167,13 @@ def main(args):
                     break
     logger.info("params after freezing:\n"+json.dumps({n: p.numel() for n, p in model.named_parameters() if p.requires_grad}, indent=2))
 
-    optimizer = torch.optim.AdamW(param_dicts, lr=args.lr,
-                                  weight_decay=args.weight_decay)
+    # optimizer = torch.optim.AdamW(param_dicts, lr=args.lr,
+    #                               weight_decay=args.weight_decay)
+    optimizer = torch.optim.AdamW(
+                param_dicts,
+                lr=float(args.lr),
+                weight_decay=float(args.weight_decay)
+            )
 
     logger.debug("build dataset ... ...")
     if not args.eval:
