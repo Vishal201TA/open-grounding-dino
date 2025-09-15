@@ -37,21 +37,22 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     _cnt = 0
 
     prompt_templates = {
-        "Fall-Detected": "person falling",
-        "Gloves": "gloves",
-        "NO-Gloves": "no gloves",
-        "Goggles": "goggles",
-        "NO-Goggles": "no goggles",
-        "Hardhat": "hardhat",
-        "NO-Hardhat": "no hardhat",
-        "Mask": "mask",
-        "NO-Mask": "no mask",
-        "Safety Vest": "safety vest",
-        "NO-Safety Vest": "no safety vest",
-        "Person": "person",
-        "Safety Cone": "safety cone",
-        "Ladder": "ladder",
+        "Gloves": "a person wearing safety gloves",
+        "NO-Gloves": "a person without gloves",
+        "Mask": "a person wearing a mask",
+        "NO-Mask": "a person without a mask",
+        "Hardhat": "a worker wearing a hardhat",
+        "Safety Vest": "a worker wearing a safety vest",
+        "Fall-Detected": "a person falling on the ground",
+        "Goggles": "a person wearing goggles",
+        "NO-Goggles": "a person without goggles",
+        "NO-Hardhat": "a worker without a hardhat",
+        "NO-Safety Vest": "a worker without a safety vest",
+        "Person": "a person",
+        "Safety Cone": "a safety cone",
+        "Ladder": "a ladder"
     }
+
 
     for samples, targets in metric_logger.log_every(data_loader, print_freq, header, logger=logger):
         samples = samples.to(device)
@@ -75,14 +76,12 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
         captions = []
         for t in targets:
-            cap = t.get("caption", [])
-            if not isinstance(cap, list):
-                cap = [cap]
-            for c in cap:
-                c_prompt = prompt_templates.get(c, f"a photo of {c}")
-                if c_prompt.strip():
-                    captions.append(c_prompt)
-
+            cap = t.get("caption")
+            if isinstance(cap, list):
+                cap = ", ".join([prompt_templates.get(c, f"a photo of {c}") for c in cap if c])
+            else:
+                cap = prompt_templates.get(cap, f"a photo of {cap}") if cap else "a person"
+            captions.append(cap)
 
 
         # Confirm batch size matches captions

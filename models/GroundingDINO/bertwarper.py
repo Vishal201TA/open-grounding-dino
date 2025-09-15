@@ -261,8 +261,12 @@ def generate_masks_with_special_tokens_and_transfer_map(tokenized, special_token
             cate_to_token_mask_list[row].append(c2t_maski)
         previous_col = col
 
+    # cate_to_token_mask_list = [
+    #     torch.stack(cate_to_token_mask_listi, dim=0)
+    #     for cate_to_token_mask_listi in cate_to_token_mask_list
+    # ]
     cate_to_token_mask_list = [
-        torch.stack(cate_to_token_mask_listi, dim=0)
+        torch.stack(cate_to_token_mask_listi, dim=0) if len(cate_to_token_mask_listi) > 0 else torch.zeros((0, num_token), dtype=torch.bool, device=input_ids.device)
         for cate_to_token_mask_listi in cate_to_token_mask_list
     ]
 
