@@ -36,12 +36,14 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
     _cnt = 0
 
-
     for samples, targets in metric_logger.log_every(data_loader, print_freq, header, logger=logger):
-
         samples = samples.to(device)
-        captions = [t["caption"] for t in targets]
-        cap_list = [t["cap_list"] for t in targets]
+        captions = [str(cap) for t in targets for cap in (t["caption"] if isinstance(t["caption"], list) else [t["caption"]])]
+        cap_list = [t.get("cap_list", []) for t in targets]
+        if _cnt < 2:
+            print("DEBUG Captions:", captions[:10])
+
+
         targets = [{k: v.to(device) for k, v in t.items() if torch.is_tensor(v)} for t in targets]
         with torch.cuda.amp.autocast(enabled=args.amp):
             outputs = model(samples, captions=captions)
