@@ -76,6 +76,9 @@ class HungarianMatcher(nn.Module):
         # Compute the classification cost.
         alpha = self.focal_alpha
         gamma = 2.0
+        print("DEBUG tgt_ids:", tgt_ids.cpu().tolist())
+        print("DEBUG label_map size:", label_map.size())
+
 
         new_label_map=label_map[tgt_ids.cpu()]
 
