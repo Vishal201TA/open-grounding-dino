@@ -2,15 +2,15 @@
   "train": [
     {
       "dataset_mode": "coco",
-      "anno": "/kaggle/working/ppe_data/annotations/instances_train.json",
-      "root": "/kaggle/working/ppe_data/images/train"
+      "anno": "/kaggle/working/open-grounding-dino/ppe_data/annotations/instances_train.json",
+      "root": "/kaggle/working/open-grounding-dino/ppe_data/images/train"
     }
   ],
   "val": [
     {
       "dataset_mode": "coco",
-      "anno": "/kaggle/working/ppe_data/annotations/instances_valid.json",
-      "root": "/kaggle/working/ppe_data/images/valid"
+      "anno": "/kaggle/working/open-grounding-dino/ppe_data/annotations/instances_valid.json",
+      "root": "/kaggle/working/open-grounding-dino/ppe_data/images/valid"
     }
   ]
 }
