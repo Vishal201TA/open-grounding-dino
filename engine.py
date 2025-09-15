@@ -75,13 +75,14 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
         captions = []
         for t in targets:
-            cap = t.get("caption")
-            if isinstance(cap, list):
-                cap = ", ".join([prompt_templates.get(c, c) for c in cap if c])  # combine multiple labels
-            cap = prompt_templates.get(cap, f"a photo of {cap}") if cap else "safety helmet, person, goggles, safety vest, safety pants ,gloves"
-            if not cap.strip():
-                cap = "safety helmet, person, goggles, safety vest, safety pants ,gloves"  # fallback if empty string
-            captions.append(cap)
+            cap = t.get("caption", [])
+            if not isinstance(cap, list):
+                cap = [cap]
+            for c in cap:
+                c_prompt = prompt_templates.get(c, f"a photo of {c}")
+                if c_prompt.strip():
+                    captions.append(c_prompt)
+
 
 
         # Confirm batch size matches captions
