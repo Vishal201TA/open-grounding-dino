@@ -104,9 +104,9 @@ sub_sentence_present: true
 max_labels: 80
 
 freeze_keywords: null
-lr_backbone: 1e-05
+lr_backbone: 0.00001
 lr_backbone_names: ["backbone.0", "bert"]
-lr_linear_proj_mult: 1e-05
+lr_linear_proj_mult: 0.00001
 lr_linear_proj_names: ["ref_point_head", "sampling_offsets"]
 param_dict_type: "ddetr_in_mmdet"
 ddetr_lr_param: false
