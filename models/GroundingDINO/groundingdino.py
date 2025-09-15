@@ -522,62 +522,197 @@ class SetCriterion(nn.Module):
         assert loss in loss_map, f'do you really want to compute {loss} loss?'
         return loss_map[loss](outputs, targets, indices, num_boxes, **kwargs)
 
-    def forward(self, outputs, targets, cat_list, caption, return_indices=False):
-        """ This performs the loss computation.
-        Parameters:
-             outputs: dict of tensors, see the output specification of the model for the format
-             targets: list of dicts, such that len(targets) == batch_size.
-                      The expected keys in each dict depends on the losses applied, see each loss' doc
+    # def forward(self, outputs, targets, cat_list, caption, return_indices=False):
+    #     """ This performs the loss computation.
+    #     Parameters:
+    #          outputs: dict of tensors, see the output specification of the model for the format
+    #          targets: list of dicts, such that len(targets) == batch_size.
+    #                   The expected keys in each dict depends on the losses applied, see each loss' doc
             
-             return_indices: used for vis. if True, the layer0-5 indices will be returned as well.
-        """
-        device=next(iter(outputs.values())).device
-        one_hot = torch.zeros(outputs['pred_logits'].size(),dtype=torch.int64,device=device) # torch.Size([bs, 900, 256])
-        token = outputs['token'] 
+    #          return_indices: used for vis. if True, the layer0-5 indices will be returned as well.
+    #     """
+    #     device=next(iter(outputs.values())).device
+    #     one_hot = torch.zeros(outputs['pred_logits'].size(),dtype=torch.int64,device=device) # torch.Size([bs, 900, 256])
+    #     token = outputs['token'] 
         
+    #     label_map_list = []
+    #     indices = []
+    #     for j in range(len(cat_list)): # bs
+    #         label_map=[]
+    #         for i in range(len(cat_list[j])):
+    #             label_id=torch.tensor([i])
+    #             per_label=create_positive_map(token[j], label_id, cat_list[j], caption[j])
+    #             label_map.append(per_label)
+    #         label_map=torch.stack(label_map,dim=0).squeeze(1)
+    #         label_map_list.append(label_map)
+    #     for j in range(len(cat_list)): # bs
+    #         for_match = {
+    #             "pred_logits" : outputs['pred_logits'][j].unsqueeze(0),
+    #             "pred_boxes" : outputs['pred_boxes'][j].unsqueeze(0)
+    #         }
+    #         inds = self.matcher(for_match, [targets[j]], label_map_list[j])
+    #         indices.extend(inds)
+    #     # indices : A list of size batch_size, containing tuples of (index_i, index_j) where:
+    #     # - index_i is the indices of the selected predictions (in order)
+    #     # - index_j is the indices of the corresponding selected targets (in order)
+
+    #     # import pdb; pdb.set_trace()
+    #     tgt_ids = [v["labels"].to(device) for v in targets]
+    #     # len(tgt_ids) == bs
+    #     for i in range(len(indices)):
+    #         idx_pred = indices[i][0].to(device)       # prediction indices
+    #         idx_tgt  = indices[i][1].to(device)       # target indices
+
+    #         tgt_ids[i] = tgt_ids[i].to(device)[idx_tgt]
+    #         one_hot[i, idx_pred] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
+
+    #         print(f"DEBUG tgt_ids[{i}] = {tgt_ids[i].tolist()}, label_map_list size = {label_map_list[i].size(0)}")
+
+    #         # tgt_ids[i]=tgt_ids[i][indices[i][1]].to(device)
+    #         # one_hot[i,indices[i][0].to(device)] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
+
+
+    #     outputs['one_hot'] = one_hot
+    #     if return_indices:
+    #         indices0_copy = indices
+    #         indices_list = []
+
+    #     # Compute the average number of target boxes accross all nodes, for normalization purposes
+    #     num_boxes_list = [len(t["labels"]) for t in targets]
+    #     num_boxes = sum(num_boxes_list)
+    #     num_boxes = torch.as_tensor([num_boxes], dtype=torch.float, device=device)
+    #     if is_dist_avail_and_initialized():
+    #         torch.distributed.all_reduce(num_boxes)
+    #     num_boxes = torch.clamp(num_boxes / get_world_size(), min=1).item()
+
+    #     # Compute all the requested losses
+    #     losses = {}
+    #     for loss in self.losses:
+    #         losses.update(self.get_loss(loss, outputs, targets, indices, num_boxes))
+
+    #     # In case of auxiliary losses, we repeat this process with the output of each intermediate layer.
+    #     if 'aux_outputs' in outputs:
+    #         for idx, aux_outputs in enumerate(outputs['aux_outputs']):
+    #             indices = []
+    #             for j in range(len(cat_list)): # bs
+    #                 aux_output_single = {
+    #                     'pred_logits' : aux_outputs['pred_logits'][j].unsqueeze(0),
+    #                     'pred_boxes': aux_outputs['pred_boxes'][j].unsqueeze(0)
+    #                 }
+    #                 inds = self.matcher(aux_output_single, [targets[j]], label_map_list[j])
+    #                 indices.extend(inds)
+    #             one_hot_aux = torch.zeros(outputs['pred_logits'].size(),dtype=torch.int64,device=device)
+    #             tgt_ids = [v["labels"].to(device) for v in targets]
+    #             for i in range(len(indices)):
+    #                 idx_pred = indices[i][0].to(device)       # prediction indices
+    #                 idx_tgt  = indices[i][1].to(device)       # target indices
+
+    #                 tgt_ids[i] = tgt_ids[i].to(device)[idx_tgt]
+    #                 one_hot_aux[i, idx_pred] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
+
+    #                 # tgt_ids[i]=tgt_ids[i][indices[i][1]].to(device)
+    #                 # one_hot_aux[i,indices[i][0].to(device)] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
+    #             aux_outputs['one_hot'] = one_hot_aux
+    #             aux_outputs['text_mask'] = outputs['text_mask']
+    #             if return_indices:
+    #                 indices_list.append(indices)
+    #             for loss in self.losses:
+    #                 kwargs = {}
+    #                 l_dict = self.get_loss(loss, aux_outputs, targets, indices, num_boxes, **kwargs)                
+    #                 l_dict = {k + f'_{idx}': v for k, v in l_dict.items()}
+    #                 losses.update(l_dict)
+
+    #     # interm_outputs loss
+    #     if 'interm_outputs' in outputs:
+    #         interm_outputs = outputs['interm_outputs']
+    #         indices = []
+    #         for j in range(len(cat_list)): # bs
+    #             interm_output_single = {
+    #                 'pred_logits' : interm_outputs['pred_logits'][j].unsqueeze(0),
+    #                 'pred_boxes': interm_outputs['pred_boxes'][j].unsqueeze(0)
+    #             }
+    #             inds = self.matcher(interm_output_single, [targets[j]], label_map_list[j])
+    #             indices.extend(inds)
+    #         one_hot_aux = torch.zeros(outputs['pred_logits'].size(),dtype=torch.int64,device=device)
+    #         tgt_ids = [v["labels"].to(device) for v in targets]
+    #         for i in range(len(indices)):
+    #             idx_pred = indices[i][0].to(device)       # prediction indices
+    #             idx_tgt  = indices[i][1].to(device)       # target indices
+
+    #             tgt_ids[i] = tgt_ids[i].to(device)[idx_tgt]
+    #             one_hot_aux[i, idx_pred] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
+
+    #             # tgt_ids[i]=tgt_ids[i][indices[i][1]].to(device)
+    #             # one_hot_aux[i,indices[i][0].to(device)] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
+    #         interm_outputs['one_hot'] = one_hot_aux
+    #         interm_outputs['text_mask'] = outputs['text_mask']
+    #         if return_indices:
+    #             indices_list.append(indices)
+    #         for loss in self.losses:
+    #             kwargs = {}
+    #             l_dict = self.get_loss(loss, interm_outputs, targets, indices, num_boxes, **kwargs)
+    #             l_dict = {k + f'_interm': v for k, v in l_dict.items()}
+    #             losses.update(l_dict)
+
+    #     if return_indices:
+    #         indices_list.append(indices0_copy)
+    #         return losses, indices_list
+
+    #     return losses
+
+    def forward(self, outputs, targets, cat_list, caption, return_indices=False):
+        
+        device = next(iter(outputs.values())).device
+        batch_size = len(targets)
+
+        one_hot = torch.zeros(outputs['pred_logits'].size(), dtype=torch.int64, device=device)
+        token = outputs['token'] 
+
+        # Build label_map_list for each batch
         label_map_list = []
-        indices = []
-        for j in range(len(cat_list)): # bs
-            label_map=[]
+        for j in range(batch_size):
+            label_map = []
             for i in range(len(cat_list[j])):
-                label_id=torch.tensor([i])
-                per_label=create_positive_map(token[j], label_id, cat_list[j], caption[j])
+                label_id = torch.tensor([i])
+                per_label = create_positive_map(token[j], label_id, cat_list[j], caption[j])
                 label_map.append(per_label)
-            label_map=torch.stack(label_map,dim=0).squeeze(1)
+            label_map = torch.stack(label_map, dim=0).squeeze(1)
             label_map_list.append(label_map)
-        for j in range(len(cat_list)): # bs
+
+        # Compute matching indices
+        indices = []
+        for j in range(batch_size):
             for_match = {
-                "pred_logits" : outputs['pred_logits'][j].unsqueeze(0),
-                "pred_boxes" : outputs['pred_boxes'][j].unsqueeze(0)
+                "pred_logits": outputs['pred_logits'][j].unsqueeze(0),
+                "pred_boxes": outputs['pred_boxes'][j].unsqueeze(0)
             }
             inds = self.matcher(for_match, [targets[j]], label_map_list[j])
             indices.extend(inds)
-        # indices : A list of size batch_size, containing tuples of (index_i, index_j) where:
-        # - index_i is the indices of the selected predictions (in order)
-        # - index_j is the indices of the corresponding selected targets (in order)
 
-        # import pdb; pdb.set_trace()
+        # Convert target labels to device
         tgt_ids = [v["labels"].to(device) for v in targets]
-        # len(tgt_ids) == bs
+
+        # Fill one-hot map safely
         for i in range(len(indices)):
-            idx_pred = indices[i][0].to(device)       # prediction indices
-            idx_tgt  = indices[i][1].to(device)       # target indices
+            idx_pred = indices[i][0].to(device)
+            idx_tgt = indices[i][1].to(device)
 
-            tgt_ids[i] = tgt_ids[i].to(device)[idx_tgt]
-            one_hot[i, idx_pred] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
+            tgt_ids_i = tgt_ids[i][idx_tgt]
+            label_map_i = label_map_list[i].to(device)
 
-            print(f"DEBUG tgt_ids[{i}] = {tgt_ids[i].tolist()}, label_map_list size = {label_map_list[i].size(0)}")
+            # clamp to prevent out-of-bounds
+            max_idx = label_map_i.size(0) - 1
+            tgt_ids_i = torch.clamp(tgt_ids_i, min=0, max=max_idx)
 
-            # tgt_ids[i]=tgt_ids[i][indices[i][1]].to(device)
-            # one_hot[i,indices[i][0].to(device)] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
-
+            one_hot[i, idx_pred] = label_map_i[tgt_ids_i].to(torch.long)
 
         outputs['one_hot'] = one_hot
+
         if return_indices:
             indices0_copy = indices
             indices_list = []
 
-        # Compute the average number of target boxes accross all nodes, for normalization purposes
+        # Compute num_boxes for normalization
         num_boxes_list = [len(t["labels"]) for t in targets]
         num_boxes = sum(num_boxes_list)
         num_boxes = torch.as_tensor([num_boxes], dtype=torch.float, device=device)
@@ -585,73 +720,79 @@ class SetCriterion(nn.Module):
             torch.distributed.all_reduce(num_boxes)
         num_boxes = torch.clamp(num_boxes / get_world_size(), min=1).item()
 
-        # Compute all the requested losses
+        # Compute all losses
         losses = {}
         for loss in self.losses:
             losses.update(self.get_loss(loss, outputs, targets, indices, num_boxes))
 
-        # In case of auxiliary losses, we repeat this process with the output of each intermediate layer.
+        # Auxiliary outputs
         if 'aux_outputs' in outputs:
             for idx, aux_outputs in enumerate(outputs['aux_outputs']):
-                indices = []
-                for j in range(len(cat_list)): # bs
-                    aux_output_single = {
-                        'pred_logits' : aux_outputs['pred_logits'][j].unsqueeze(0),
+                indices_aux = []
+                for j in range(batch_size):
+                    aux_single = {
+                        'pred_logits': aux_outputs['pred_logits'][j].unsqueeze(0),
                         'pred_boxes': aux_outputs['pred_boxes'][j].unsqueeze(0)
                     }
-                    inds = self.matcher(aux_output_single, [targets[j]], label_map_list[j])
-                    indices.extend(inds)
-                one_hot_aux = torch.zeros(outputs['pred_logits'].size(),dtype=torch.int64,device=device)
-                tgt_ids = [v["labels"].to(device) for v in targets]
-                for i in range(len(indices)):
-                    idx_pred = indices[i][0].to(device)       # prediction indices
-                    idx_tgt  = indices[i][1].to(device)       # target indices
+                    inds_aux = self.matcher(aux_single, [targets[j]], label_map_list[j])
+                    indices_aux.extend(inds_aux)
 
-                    tgt_ids[i] = tgt_ids[i].to(device)[idx_tgt]
-                    one_hot_aux[i, idx_pred] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
+                one_hot_aux = torch.zeros(outputs['pred_logits'].size(), dtype=torch.int64, device=device)
+                tgt_ids_aux = [v["labels"].to(device) for v in targets]
 
-                    # tgt_ids[i]=tgt_ids[i][indices[i][1]].to(device)
-                    # one_hot_aux[i,indices[i][0].to(device)] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
+                for i in range(len(indices_aux)):
+                    idx_pred = indices_aux[i][0].to(device)
+                    idx_tgt = indices_aux[i][1].to(device)
+                    tgt_ids_i = tgt_ids_aux[i][idx_tgt]
+                    label_map_i = label_map_list[i].to(device)
+                    max_idx = label_map_i.size(0) - 1
+                    tgt_ids_i = torch.clamp(tgt_ids_i, min=0, max=max_idx)
+                    one_hot_aux[i, idx_pred] = label_map_i[tgt_ids_i].to(torch.long)
+
                 aux_outputs['one_hot'] = one_hot_aux
                 aux_outputs['text_mask'] = outputs['text_mask']
+
                 if return_indices:
-                    indices_list.append(indices)
+                    indices_list.append(indices_aux)
+
                 for loss in self.losses:
-                    kwargs = {}
-                    l_dict = self.get_loss(loss, aux_outputs, targets, indices, num_boxes, **kwargs)                
+                    l_dict = self.get_loss(loss, aux_outputs, targets, indices_aux, num_boxes)
                     l_dict = {k + f'_{idx}': v for k, v in l_dict.items()}
                     losses.update(l_dict)
 
-        # interm_outputs loss
+        # Intermediate outputs
         if 'interm_outputs' in outputs:
             interm_outputs = outputs['interm_outputs']
-            indices = []
-            for j in range(len(cat_list)): # bs
-                interm_output_single = {
-                    'pred_logits' : interm_outputs['pred_logits'][j].unsqueeze(0),
+            indices_interm = []
+            for j in range(batch_size):
+                interm_single = {
+                    'pred_logits': interm_outputs['pred_logits'][j].unsqueeze(0),
                     'pred_boxes': interm_outputs['pred_boxes'][j].unsqueeze(0)
                 }
-                inds = self.matcher(interm_output_single, [targets[j]], label_map_list[j])
-                indices.extend(inds)
-            one_hot_aux = torch.zeros(outputs['pred_logits'].size(),dtype=torch.int64,device=device)
-            tgt_ids = [v["labels"].to(device) for v in targets]
-            for i in range(len(indices)):
-                idx_pred = indices[i][0].to(device)       # prediction indices
-                idx_tgt  = indices[i][1].to(device)       # target indices
+                inds_interm = self.matcher(interm_single, [targets[j]], label_map_list[j])
+                indices_interm.extend(inds_interm)
 
-                tgt_ids[i] = tgt_ids[i].to(device)[idx_tgt]
-                one_hot_aux[i, idx_pred] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
+            one_hot_interm = torch.zeros(outputs['pred_logits'].size(), dtype=torch.int64, device=device)
+            tgt_ids_interm = [v["labels"].to(device) for v in targets]
 
-                # tgt_ids[i]=tgt_ids[i][indices[i][1]].to(device)
-                # one_hot_aux[i,indices[i][0].to(device)] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
-            interm_outputs['one_hot'] = one_hot_aux
+            for i in range(len(indices_interm)):
+                idx_pred = indices_interm[i][0].to(device)
+                idx_tgt = indices_interm[i][1].to(device)
+                tgt_ids_i = tgt_ids_interm[i][idx_tgt]
+                label_map_i = label_map_list[i].to(device)
+                max_idx = label_map_i.size(0) - 1
+                tgt_ids_i = torch.clamp(tgt_ids_i, min=0, max=max_idx)
+                one_hot_interm[i, idx_pred] = label_map_i[tgt_ids_i].to(torch.long)
+
+            interm_outputs['one_hot'] = one_hot_interm
             interm_outputs['text_mask'] = outputs['text_mask']
+
             if return_indices:
-                indices_list.append(indices)
+                indices_list.append(indices_interm)
+
             for loss in self.losses:
-                kwargs = {}
-                l_dict = self.get_loss(loss, interm_outputs, targets, indices, num_boxes, **kwargs)
-                l_dict = {k + f'_interm': v for k, v in l_dict.items()}
+                l_dict = self.get_loss(loss, interm_outputs, targets, indices_interm, num_boxes)
+                l_dict = {k + '_interm': v for k, v in l_dict.items()}
                 losses.update(l_dict)
 
         if return_indices:
