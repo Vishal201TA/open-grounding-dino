@@ -56,7 +56,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
     for samples, targets in metric_logger.log_every(data_loader, print_freq, header, logger=logger):
         samples = samples.to(device)
-        # captions = [str(cap) for t in targets for cap in (t["caption"] if isinstance(t["caption"], list) else [t["caption"]])]
+        captions = [str(cap) for t in targets for cap in (t["caption"] if isinstance(t["caption"], list) else [t["caption"]])]
         captions = [
             prompt_templates.get(cap, f"a photo of {cap}") 
             for cap in captions
