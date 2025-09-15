@@ -80,7 +80,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         cap_list = [t.get("cap_list", []) for t in targets]
         if _cnt < 2:
             print("DEBUG Captions:", captions[:10])
-            print("Batch size:", len(samples), "Captions size:", len(captions))
+            print("Batch size:", samples.tensors.shape[0], "Captions size:", len(captions))
 
 
         targets = [{k: v.to(device) for k, v in t.items() if torch.is_tensor(v)} for t in targets]
