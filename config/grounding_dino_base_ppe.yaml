@@ -59,7 +59,7 @@ dataset:
     images_dir: /content/ppe_data/images/val
 
 training:
-  batch_size: 4                   
+  batch_size: 2                   
   lr: 1e-4
   epochs: 50
   weight_decay: 0.0001
