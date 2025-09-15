@@ -805,53 +805,95 @@ def build_groundingdino(args):
 
     return model, criterion, postprocessors
 
-def create_positive_map(tokenized, tokens_positive,cat_list,caption):
+# def create_positive_map(tokenized, tokens_positive,cat_list,caption):
+#     """construct a map such that positive_map[i,j] = True iff box i is associated to token j"""
+#     positive_map = torch.zeros((len(tokens_positive), 256), dtype=torch.float)
+
+#     for j,label in enumerate(tokens_positive):
+
+#         start_ind = caption.find(cat_list[label])
+#         end_ind = start_ind + len(cat_list[label]) - 1
+#         beg_pos = tokenized.char_to_token(start_ind)
+#         try:
+#             end_pos = tokenized.char_to_token(end_ind)
+#         except:
+#             end_pos = None
+#         if end_pos is None:
+#             try:
+#                 end_pos = tokenized.char_to_token(end_ind - 1)
+#                 if end_pos is None:
+#                     end_pos = tokenized.char_to_token(end_ind - 2)
+#             except:
+#                 end_pos = None
+#         # except Exception as e:
+#         #     print("beg:", beg, "end:", end)
+#         #     print("token_positive:", tokens_positive)
+#         #     # print("beg_pos:", beg_pos, "end_pos:", end_pos)
+#         #     raise e
+#         # if beg_pos is None:
+#         #     try:
+#         #         beg_pos = tokenized.char_to_token(beg + 1)
+#         #         if beg_pos is None:
+#         #             beg_pos = tokenized.char_to_token(beg + 2)
+#         #     except:
+#         #         beg_pos = None
+#         # if end_pos is None:
+#         #     try:
+#         #         end_pos = tokenized.char_to_token(end - 2)
+#         #         if end_pos is None:
+#         #             end_pos = tokenized.char_to_token(end - 3)
+#         #     except:
+#         #         end_pos = None
+#         if beg_pos is None or end_pos is None:
+#             continue
+#         if beg_pos < 0 or end_pos < 0:
+#             continue
+#         if beg_pos > end_pos:
+#             continue
+#         # assert beg_pos is not None and end_pos is not None
+#         positive_map[j,beg_pos: end_pos + 1].fill_(1)
+#     return positive_map 
+
+
+def create_positive_map(tokenized, tokens_positive, cat_list, caption):
     """construct a map such that positive_map[i,j] = True iff box i is associated to token j"""
     positive_map = torch.zeros((len(tokens_positive), 256), dtype=torch.float)
 
-    for j,label in enumerate(tokens_positive):
+    for j, label in enumerate(tokens_positive):
+        category = cat_list[label]
 
-        start_ind = caption.find(cat_list[label])
-        end_ind = start_ind + len(cat_list[label]) - 1
+        # 1. Find category in caption
+        start_ind = caption.find(category)
+        if start_ind == -1:
+            print(f"[WARNING] Category '{category}' not found in caption: '{caption}'")
+            continue  # skip if not found
+
+        end_ind = start_ind + len(category) - 1
+
+        # 2. Map char indices to token indices
         beg_pos = tokenized.char_to_token(start_ind)
-        try:
-            end_pos = tokenized.char_to_token(end_ind)
-        except:
-            end_pos = None
+        end_pos = tokenized.char_to_token(end_ind)
+
+        # 3. Fallbacks for tokenizer failures
         if end_pos is None:
-            try:
-                end_pos = tokenized.char_to_token(end_ind - 1)
-                if end_pos is None:
-                    end_pos = tokenized.char_to_token(end_ind - 2)
-            except:
-                end_pos = None
-        # except Exception as e:
-        #     print("beg:", beg, "end:", end)
-        #     print("token_positive:", tokens_positive)
-        #     # print("beg_pos:", beg_pos, "end_pos:", end_pos)
-        #     raise e
-        # if beg_pos is None:
-        #     try:
-        #         beg_pos = tokenized.char_to_token(beg + 1)
-        #         if beg_pos is None:
-        #             beg_pos = tokenized.char_to_token(beg + 2)
-        #     except:
-        #         beg_pos = None
-        # if end_pos is None:
-        #     try:
-        #         end_pos = tokenized.char_to_token(end - 2)
-        #         if end_pos is None:
-        #             end_pos = tokenized.char_to_token(end - 3)
-        #     except:
-        #         end_pos = None
+            for shift in [1, 2, -1, -2]:
+                try:
+                    end_pos = tokenized.char_to_token(end_ind + shift)
+                    if end_pos is not None:
+                        break
+                except:
+                    pass
+
+        # 4. Final safety checks
         if beg_pos is None or end_pos is None:
+            print(f"[WARNING] Could not map '{category}' in caption: '{caption}'")
             continue
         if beg_pos < 0 or end_pos < 0:
             continue
         if beg_pos > end_pos:
             continue
-        # assert beg_pos is not None and end_pos is not None
-        positive_map[j,beg_pos: end_pos + 1].fill_(1)
-    return positive_map 
 
+        # 5. Fill positive map
+        positive_map[j, beg_pos:end_pos + 1].fill_(1)
 
+    return positive_map
