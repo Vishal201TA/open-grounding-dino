@@ -677,6 +677,11 @@ class SetCriterion(nn.Module):
                 per_label = create_positive_map(token[j], label_id, cat_list[j], caption[j])
                 label_map.append(per_label)
             label_map = torch.stack(label_map, dim=0).squeeze(1)
+            # after building label_map
+            if len(label_map) == 0:
+                # Fallback: at least one dummy entry
+                label_map = [torch.zeros((1, 256), device=outputs['pred_logits'].device)]
+
             label_map_list.append(label_map)
 
         # Compute matching indices

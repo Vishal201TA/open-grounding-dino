@@ -110,8 +110,8 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             captions = ["safety helmet, person, goggles, safety vest, safety pants ,gloves"]
         cap_list = [t.get("cap_list", []) for t in targets]
         if _cnt < 2:
-            print("DEBUG Captions:", captions[:10])
-            print("Batch size:", samples.tensors.shape[0], "Captions size:", len(captions))
+            # print("DEBUG Captions:", captions[:10])
+            # print("Batch size:", samples.tensors.shape[0], "Captions size:", len(captions))
             for i, cap in enumerate(captions):
                 if not cap.strip():
                     print(f"Empty caption at index {i}")
@@ -141,8 +141,8 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             print(loss_dict_reduced)
             sys.exit(1)
 
-        print("LR type:", type(args.lr), "value:", args.lr)
-        print("WD type:", type(args.weight_decay), "value:", args.weight_decay)
+        # print("LR type:", type(args.lr), "value:", args.lr)
+        # print("WD type:", type(args.weight_decay), "value:", args.weight_decay)
 
         # amp backward function
         if args.amp:
