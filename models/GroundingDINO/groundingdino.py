@@ -560,10 +560,16 @@ class SetCriterion(nn.Module):
         tgt_ids = [v["labels"].to(device) for v in targets]
         # len(tgt_ids) == bs
         for i in range(len(indices)):
+            idx_pred = indices[i][0].to(device)       # prediction indices
+            idx_tgt  = indices[i][1].to(device)       # target indices
+
+            tgt_ids[i] = tgt_ids[i].to(device)[idx_tgt]
+            one_hot[i, idx_pred] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
+
             print(f"DEBUG tgt_ids[{i}] = {tgt_ids[i].tolist()}, label_map_list size = {label_map_list[i].size(0)}")
 
-            tgt_ids[i]=tgt_ids[i][indices[i][1]].to(device)
-            one_hot[i,indices[i][0].to(device)] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
+            # tgt_ids[i]=tgt_ids[i][indices[i][1]].to(device)
+            # one_hot[i,indices[i][0].to(device)] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
 
 
         outputs['one_hot'] = one_hot
@@ -598,8 +604,14 @@ class SetCriterion(nn.Module):
                 one_hot_aux = torch.zeros(outputs['pred_logits'].size(),dtype=torch.int64,device=device)
                 tgt_ids = [v["labels"].to(device) for v in targets]
                 for i in range(len(indices)):
-                    tgt_ids[i]=tgt_ids[i][indices[i][1]].to(device)
-                    one_hot_aux[i,indices[i][0].to(device)] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
+                    idx_pred = indices[i][0].to(device)       # prediction indices
+                    idx_tgt  = indices[i][1].to(device)       # target indices
+
+                    tgt_ids[i] = tgt_ids[i].to(device)[idx_tgt]
+                    one_hot_aux[i, idx_pred] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
+
+                    # tgt_ids[i]=tgt_ids[i][indices[i][1]].to(device)
+                    # one_hot_aux[i,indices[i][0].to(device)] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
                 aux_outputs['one_hot'] = one_hot_aux
                 aux_outputs['text_mask'] = outputs['text_mask']
                 if return_indices:
@@ -624,8 +636,14 @@ class SetCriterion(nn.Module):
             one_hot_aux = torch.zeros(outputs['pred_logits'].size(),dtype=torch.int64,device=device)
             tgt_ids = [v["labels"].to(device) for v in targets]
             for i in range(len(indices)):
-                tgt_ids[i]=tgt_ids[i][indices[i][1]].to(device)
-                one_hot_aux[i,indices[i][0].to(device)] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
+                idx_pred = indices[i][0].to(device)       # prediction indices
+                idx_tgt  = indices[i][1].to(device)       # target indices
+
+                tgt_ids[i] = tgt_ids[i].to(device)[idx_tgt]
+                one_hot_aux[i, idx_pred] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
+
+                # tgt_ids[i]=tgt_ids[i][indices[i][1]].to(device)
+                # one_hot_aux[i,indices[i][0].to(device)] = label_map_list[i][tgt_ids[i]].to(torch.long).to(device)
             interm_outputs['one_hot'] = one_hot_aux
             interm_outputs['text_mask'] = outputs['text_mask']
             if return_indices:
