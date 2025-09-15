@@ -672,6 +672,7 @@ import torch
 import torch.utils.data
 import torchvision
 from pycocotools import mask as coco_mask
+from pycocotools.coco import COCO
 
 from datasets.data_util import preparing_dataset
 import datasets.transforms as T
@@ -978,7 +979,10 @@ class CocoDetection(torchvision.datasets.CocoDetection):
     def __init__(self, img_folder, ann_file, transforms, return_masks, aux_target_hacks=None):
         super(CocoDetection, self).__init__(img_folder, ann_file)
         self._transforms = transforms
-        self.prepare = ConvertCocoPolysToMask(return_masks)
+        coco = COCO(ann_file)
+        cat_ids = coco.getCatIds()
+        cat2contig = {cat_id: i for i, cat_id in enumerate(sorted(cat_ids))}
+        self.prepare = ConvertCocoPolysToMask(return_masks,cat2contig)
         self.aux_target_hacks = aux_target_hacks
 
     def change_hack_attr(self, hackclassname, attrkv_dict):
@@ -1046,8 +1050,9 @@ def convert_coco_poly_to_mask(segmentations, height, width):
 
 
 class ConvertCocoPolysToMask(object):
-    def __init__(self, return_masks=False):
+    def __init__(self, return_masks=False,  cat2contig=None):
         self.return_masks = return_masks
+        self.cat2contig = cat2contig
 
     def __call__(self, image, target):
         w, h = image.size
@@ -1063,18 +1068,20 @@ class ConvertCocoPolysToMask(object):
         boxes[:, 0::2].clamp_(min=0, max=w)
         boxes[:, 1::2].clamp_(min=0, max=h)
 
-    #   classes = [obj["category_id"] for obj in anno]
-    #   classes = torch.tensor(classes, dtype=torch.int64)
-        # --- FIX starts here ---
-        if not hasattr(self, "cat2contig"):
-            from pycocotools.coco import COCO
-            coco = COCO(self.ann_file)
-            cat_ids = coco.getCatIds()
-            self.cat2contig = {cat_id: i for i, cat_id in enumerate(sorted(cat_ids))}
-
+        # classes = [obj["category_id"] for obj in anno]
+        # classes = torch.tensor(classes, dtype=torch.int64)
         classes = [self.cat2contig[obj["category_id"]] for obj in anno]
         classes = torch.tensor(classes, dtype=torch.int64)
-        # --- FIX ends here ---
+        # # --- FIX starts here ---
+        # if not hasattr(self, "cat2contig"):
+        #     from pycocotools.coco import COCO
+        #     coco = COCO(self.ann_file)
+        #     cat_ids = coco.getCatIds()
+        #     self.cat2contig = {cat_id: i for i, cat_id in enumerate(sorted(cat_ids))}
+
+        # classes = [self.cat2contig[obj["category_id"]] for obj in anno]
+        # classes = torch.tensor(classes, dtype=torch.int64)
+        # # --- FIX ends here ---
 
 
         # --- add captions ---
