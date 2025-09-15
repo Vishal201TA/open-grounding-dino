@@ -979,10 +979,11 @@ class CocoDetection(torchvision.datasets.CocoDetection):
     def __init__(self, img_folder, ann_file, transforms, return_masks, aux_target_hacks=None):
         super(CocoDetection, self).__init__(img_folder, ann_file)
         self._transforms = transforms
-        coco = COCO(ann_file)
-        cat_ids = coco.getCatIds()
-        cat2contig = {cat_id: i for i, cat_id in enumerate(sorted(cat_ids))}
-        self.prepare = ConvertCocoPolysToMask(return_masks,cat2contig)
+        with open(ann_file, "r") as f:
+            ann_data = json.load(f)
+        cat_ids = [cat["id"] for cat in ann_data["categories"]]
+        self.cat2contig = {cat_id: i for i, cat_id in enumerate(sorted(cat_ids))}
+        self.prepare = ConvertCocoPolysToMask(return_masks,self.cat2contig)
         self.aux_target_hacks = aux_target_hacks
 
     def change_hack_attr(self, hackclassname, attrkv_dict):
