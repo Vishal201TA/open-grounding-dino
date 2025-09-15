@@ -1,0 +1,150 @@
+modelname: groundingdino
+
+model:
+  pretrained: false
+  ckpt: /content/Open-GroundingDino/checkpoints/groundingdino_base.pth
+  num_classes: 15    
+
+hidden_dim: 256
+dim_feedforward: 2048
+nheads: 8
+enc_layers: 6
+dec_layers: 6
+dropout: 0.1
+activation: relu
+return_intermediate_dec: true
+position_embedding: sine     
+pe_temperatureH: 20
+pe_temperatureW: 20 
+backbone: swin_B_384_22k              
+dilation: false
+num_queries: 900              
+aux_loss: true
+return_interm_indices: [1, 2, 3]
+backbone_freeze_keywords: ["absolute_pos_embed", "mask_token"]
+pre_norm: false
+query_dim: 4
+transformer_activation: "relu"
+num_patterns: 3
+num_feature_levels: 4
+enc_n_points: 4   
+dec_n_points: 4   
+enc_layers: 6     
+dec_layers: 6     
+two_stage_type: "no" 
+two_stage_bbox_embed_share: false
+two_stage_class_embed_share: false
+
+
+
+# Loss weights
+cls_loss_coef: 1.0
+bbox_loss_coef: 5.0
+giou_loss_coef: 2.0
+eos_coef: 0.1
+set_cost_class: 1.0
+set_cost_bbox: 5.0
+set_cost_giou: 2.0
+focal_alpha: 0.25
+focal_gamma: 2.0
+
+
+
+dataset:
+  train:
+    path: /content/ppe_data/annotations/instances_train.json
+    images_dir: /content/ppe_data/images/train
+  val:
+    path: /content/ppe_data/annotations/instances_val.json
+    images_dir: /content/ppe_data/images/val
+
+training:
+  batch_size: 4                   # Works well on Colab GPU; reduce if out-of-memory
+  lr: 1e-4
+  epochs: 50
+  weight_decay: 0.0001
+  lr_scheduler: cosine
+  warmup_epochs: 5
+  device: cuda
+
+lr: 0.0001
+lr_drop: 10
+weight_decay: 0.0001
+masks: false
+batch_size: 4
+epochs: 50
+
+logging:
+  log_interval: 10
+  save_interval: 5
+
+evaluation:
+  enabled: true
+  batch_size: 4
+
+
+dn_box_noise_scale: 1.0
+dn_label_noise_ratio: 0.5
+dn_label_coef: 1.0
+dn_bbox_coef: 1.0
+embed_init_tgt: true
+dn_labelbook_size: 91
+max_text_len: 256
+num_select: 300
+text_encoder_type: "bert-base-uncased"
+use_text_enhancer: true
+use_fusion_layer: true
+use_checkpoint: true
+use_transformer_ckpt: true
+use_text_cross_attention: true
+text_dropout: 0.0
+fusion_dropout: 0.0
+fusion_droppath: 0.1
+sub_sentence_present: true
+max_labels: 80
+
+freeze_keywords: null
+lr_backbone: 1e-05
+lr_backbone_names: ["backbone.0", "bert"]
+lr_linear_proj_mult: 1e-05
+lr_linear_proj_names: ["ref_point_head", "sampling_offsets"]
+param_dict_type: "ddetr_in_mmdet"
+ddetr_lr_param: false
+frozen_weights: null
+
+onecyclelr: false
+multi_step_lr: false
+lr_drop_list: [10, 20]
+clip_max_norm: 0.1
+save_checkpoint_interval: 10
+dec_pred_bbox_embed_share: true
+dec_pred_class_embed_share: true
+decoder_sa_type: "sa"
+matcher_type: "HungarianMatcher"
+decoder_module_seq: ["sa", "ca", "ffn"]
+nms_iou_threshold: -1
+match_unstable_error: true
+use_detached_boxes_dec_out: false
+dn_scalar: 100
+use_coco_eval: false
+
+
+label_list:
+  - "Fall-Detected"
+  - "Gloves"
+  - "Goggles"
+  - "Hardhat"
+  - "Ladder"
+  - "Mask"
+  - "NO-Gloves"
+  - "NO-Goggles"
+  - "NO-Hardhat"
+  - "NO-Mask"
+  - "NO-Safety Vest"
+  - "Person"
+  - "Safety Cone"
+  - "Safety Vest"
+
+
+
+
