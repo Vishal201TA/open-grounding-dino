@@ -76,11 +76,25 @@ class HungarianMatcher(nn.Module):
         # Compute the classification cost.
         alpha = self.focal_alpha
         gamma = 2.0
+        
+
+        # new_label_map=label_map[tgt_ids.cpu()]
+
         print("DEBUG tgt_ids:", tgt_ids.cpu().tolist())
-        print("DEBUG label_map size:", label_map.size())
+        print("DEBUG label_map size BEFORE:", label_map.size())
 
+        # Ensure label_map is large enough
+        max_label_id = tgt_ids.max().item()
+        if label_map.size(0) <= max_label_id:
+            pad_size = max_label_id + 1 - label_map.size(0)
+            pad = torch.zeros((pad_size, label_map.size(1)), device=label_map.device)
+            label_map = torch.cat([label_map, pad], dim=0)
 
-        new_label_map=label_map[tgt_ids.cpu()]
+        print("DEBUG label_map size AFTER:", label_map.size())
+
+        # Now safe to index
+        new_label_map = label_map[tgt_ids]
+
 
         neg_cost_class = (1 - alpha) * (out_prob ** gamma) * (-(1 - out_prob + 1e-8).log())
         pos_cost_class = alpha * ((1 - out_prob) ** gamma) * (-(out_prob + 1e-8).log())
