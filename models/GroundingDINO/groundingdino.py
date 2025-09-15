@@ -557,11 +557,15 @@ class SetCriterion(nn.Module):
         # - index_j is the indices of the corresponding selected targets (in order)
 
         # import pdb; pdb.set_trace()
-        tgt_ids = [v["labels"].cpu() for v in targets]
+        tgt_ids = [v["labels"].to(device) for v in targets]
         # len(tgt_ids) == bs
         for i in range(len(indices)):
+            print(f"DEBUG tgt_ids[{i}] = {tgt_ids[i].tolist()}, label_map_list size = {label_map_list[i].size(0)}")
+
             tgt_ids[i]=tgt_ids[i][indices[i][1]]
             one_hot[i,indices[i][0]] = label_map_list[i][tgt_ids[i]].to(torch.long)
+
+
         outputs['one_hot'] = one_hot
         if return_indices:
             indices0_copy = indices
@@ -591,8 +595,8 @@ class SetCriterion(nn.Module):
                     }
                     inds = self.matcher(aux_output_single, [targets[j]], label_map_list[j])
                     indices.extend(inds)
-                one_hot_aux = torch.zeros(outputs['pred_logits'].size(),dtype=torch.int64)
-                tgt_ids = [v["labels"].cpu() for v in targets]
+                one_hot_aux = torch.zeros(outputs['pred_logits'].size(),dtype=torch.int64,device=device)
+                tgt_ids = [v["labels"].to(device) for v in targets]
                 for i in range(len(indices)):
                     tgt_ids[i]=tgt_ids[i][indices[i][1]]
                     one_hot_aux[i,indices[i][0]] = label_map_list[i][tgt_ids[i]].to(torch.long)
@@ -617,7 +621,7 @@ class SetCriterion(nn.Module):
                 }
                 inds = self.matcher(interm_output_single, [targets[j]], label_map_list[j])
                 indices.extend(inds)
-            one_hot_aux = torch.zeros(outputs['pred_logits'].size(),dtype=torch.int64)
+            one_hot_aux = torch.zeros(outputs['pred_logits'].size(),dtype=torch.int64,device=device)
             tgt_ids = [v["labels"].cpu() for v in targets]
             for i in range(len(indices)):
                 tgt_ids[i]=tgt_ids[i][indices[i][1]]
