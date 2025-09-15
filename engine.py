@@ -61,6 +61,10 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             prompt_templates.get(cap, f"a photo of {cap}") 
             for cap in captions
         ]
+        captions = [cap for cap in captions if cap and cap.strip()]
+
+        if not captions:
+            captions = ["safety helmet, person, goggles, safety vest, safety pants ,gloves"]
         cap_list = [t.get("cap_list", []) for t in targets]
         if _cnt < 2:
             print("DEBUG Captions:", captions[:10])
