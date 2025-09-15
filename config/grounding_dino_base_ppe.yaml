@@ -71,7 +71,7 @@ lr: 0.0001
 lr_drop: 10
 weight_decay: 0.0001
 masks: false
-batch_size: 4
+batch_size: 1
 epochs: 50
 
 logging:
@@ -80,7 +80,7 @@ logging:
 
 evaluation:
   enabled: true
-  batch_size: 4
+  batch_size: 1
 
 
 dn_box_noise_scale: 1.0
