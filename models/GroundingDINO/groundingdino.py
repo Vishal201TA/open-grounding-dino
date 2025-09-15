@@ -670,19 +670,34 @@ class SetCriterion(nn.Module):
 
         # Build label_map_list for each batch
         label_map_list = []
+        # for j in range(batch_size):
+        #     label_map = []
+        #     for i in range(len(cat_list[j])):
+        #         label_id = torch.tensor([i])
+        #         per_label = create_positive_map(token[j], label_id, cat_list[j], caption[j])
+        #         label_map.append(per_label)
+        #     label_map = torch.stack(label_map, dim=0).squeeze(1)
+        #     # after building label_map
+        #     if len(label_map) == 0:
+        #         # Fallback: at least one dummy entry
+        #         label_map = [torch.zeros((1, 256), device=outputs['pred_logits'].device)]
+
+        #     label_map_list.append(label_map)
+
         for j in range(batch_size):
             label_map = []
             for i in range(len(cat_list[j])):
                 label_id = torch.tensor([i])
                 per_label = create_positive_map(token[j], label_id, cat_list[j], caption[j])
                 label_map.append(per_label)
-            label_map = torch.stack(label_map, dim=0).squeeze(1)
-            # after building label_map
+
+            # If no labels, insert a dummy tensor
             if len(label_map) == 0:
-                # Fallback: at least one dummy entry
                 label_map = [torch.zeros((1, 256), device=outputs['pred_logits'].device)]
 
+            label_map = torch.stack(label_map, dim=0).squeeze(1)
             label_map_list.append(label_map)
+
 
         # Compute matching indices
         indices = []
