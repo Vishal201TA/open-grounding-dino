@@ -61,16 +61,30 @@ class CocoClassMapper():
     def compact2origin(self, idx):
         return self.compact2origin_mapper[int(idx)]
 
+# def to_device(item, device):
+#     if isinstance(item, torch.Tensor):
+#         return item.to(device)
+#     elif isinstance(item, list):
+#         return [to_device(i, device) for i in item]
+#     elif isinstance(item, dict):
+#         return {k: to_device(v, device) for k,v in item.items()}
+#     else:
+#         raise NotImplementedError("Call Shilong if you use other containers! type: {}".format(type(item)))
+
 def to_device(item, device):
     if isinstance(item, torch.Tensor):
         return item.to(device)
     elif isinstance(item, list):
         return [to_device(i, device) for i in item]
     elif isinstance(item, dict):
-        return {k: to_device(v, device) for k,v in item.items()}
+        return {k: to_device(v, device) for k, v in item.items()}
+    elif isinstance(item, tuple):
+        return tuple(to_device(i, device) for i in item)
+    elif isinstance(item, (str, int, float)):
+        # Keep metadata on CPU
+        return item
     else:
-        raise NotImplementedError("Call Shilong if you use other containers! type: {}".format(type(item)))
-
+        raise NotImplementedError(f"Unsupported type in to_device: {type(item)}")
 
 
 # 
