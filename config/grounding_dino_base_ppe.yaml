@@ -62,7 +62,7 @@ lr: 0.0001
 lr_drop: 10
 weight_decay: 0.0001
 masks: false
-batch_size: 16
+batch_size: 8
 epochs: 100
 
 logging:
